@@ -1,7 +1,7 @@
 use vespertide_core::TableDef;
 
 use crate::{
-    jpa::JpaExporter, prisma::PrismaExporter, seaorm::SeaOrmExporter,
+    drizzle::DrizzleExporter, jpa::JpaExporter, prisma::PrismaExporter, seaorm::SeaOrmExporter,
     sqlalchemy::SqlAlchemyExporter, sqlmodel::SqlModelExporter,
 };
 
@@ -13,6 +13,7 @@ pub enum Orm {
     SqlModel,
     Jpa,
     Prisma,
+    Drizzle,
 }
 
 /// Standardized exporter interface for all supported ORMs.
@@ -38,6 +39,7 @@ pub fn render_entity(orm: Orm, table: &TableDef) -> Result<String, String> {
         Orm::SqlModel => SqlModelExporter.render_entity(table),
         Orm::Jpa => JpaExporter.render_entity(table),
         Orm::Prisma => PrismaExporter.render_entity(table),
+        Orm::Drizzle => DrizzleExporter.render_entity(table),
     }
 }
 
@@ -53,6 +55,7 @@ pub fn render_entity_with_schema(
         Orm::SqlModel => SqlModelExporter.render_entity_with_schema(table, schema),
         Orm::Jpa => JpaExporter.render_entity_with_schema(table, schema),
         Orm::Prisma => PrismaExporter.render_entity_with_schema(table, schema),
+        Orm::Drizzle => DrizzleExporter.render_entity_with_schema(table, schema),
     }
 }
 
@@ -68,6 +71,7 @@ mod tests {
     #[case::sqlmodel(Orm::SqlModel)]
     #[case::jpa(Orm::Jpa)]
     #[case::prisma(Orm::Prisma)]
+    #[case::drizzle(Orm::Drizzle)]
     fn dispatch_render_entity_succeeds(#[case] orm: Orm) {
         let table = basic_single_pk();
         assert!(render_entity(orm, &table).is_ok());
@@ -79,6 +83,7 @@ mod tests {
     #[case::sqlmodel(Orm::SqlModel)]
     #[case::jpa(Orm::Jpa)]
     #[case::prisma(Orm::Prisma)]
+    #[case::drizzle(Orm::Drizzle)]
     fn dispatch_render_entity_with_schema_succeeds(#[case] orm: Orm) {
         let table = basic_single_pk();
         let schema = vec![table.clone()];

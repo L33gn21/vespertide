@@ -7,6 +7,13 @@
     "columnNamingCase": {
       "$ref": "#/$defs/NameCase"
     },
+    "drizzle": {
+      "description": "Drizzle-specific export configuration.",
+      "$ref": "#/$defs/DrizzleConfig",
+      "default": {
+        "provider": "postgresql"
+      }
+    },
     "lockTimeoutMs": {
       "description": "Maximum time (milliseconds) to wait acquiring a lock during a runtime\nmigration before failing. When set, the `vespertide_migration!` macro\nemits a backend-appropriate session/connection timeout at the start of\nthe migration (`PostgreSQL` `lock_timeout`, `MySQL`\n`innodb_lock_wait_timeout`, `SQLite` `PRAGMA busy_timeout`). `None`\n(default) leaves backend defaults untouched. Absent from serialized\nJSON when `None` (wire-compatible).",
       "type": [
@@ -83,6 +90,17 @@
     "columnNamingCase"
   ],
   "$defs": {
+    "DrizzleConfig": {
+      "description": "Drizzle-specific export configuration.",
+      "type": "object",
+      "properties": {
+        "provider": {
+          "description": "Database provider. Drizzle output currently targets `drizzle-orm/pg-core`\n(PostgreSQL); this field is reserved for future multi-dialect support.",
+          "type": "string",
+          "default": "postgresql"
+        }
+      }
+    },
     "FileFormat": {
       "description": "Supported file formats for generated artifacts.",
       "type": "string",

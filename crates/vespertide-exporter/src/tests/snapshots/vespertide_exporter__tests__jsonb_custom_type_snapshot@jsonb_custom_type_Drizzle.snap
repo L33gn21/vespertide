@@ -1,0 +1,10 @@
+---
+source: crates/vespertide-exporter/src/tests/mod.rs
+expression: rendered
+---
+export const jsonStruct = pgTable("json_struct", {
+  id: integer("id").primaryKey(),
+  jsonData: jsonb("json_data").notNull(),
+  jsonbData: text("jsonb_data") /* JSONB */.notNull(),
+  jsonbNullable: text("jsonb_nullable") /* jsonb */,
+});

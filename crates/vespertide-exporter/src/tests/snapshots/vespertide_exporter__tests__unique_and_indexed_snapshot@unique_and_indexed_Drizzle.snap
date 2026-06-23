@@ -1,0 +1,13 @@
+---
+source: crates/vespertide-exporter/src/tests/mod.rs
+expression: rendered
+---
+export const users = pgTable("users", {
+  id: integer("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  username: text("username").notNull().unique("uq_username"),
+  department: text("department"),
+  status: text("status").notNull().default("active"),
+}, (t) => ({
+  idxDepartment: index("idx_department").on(t.department),
+}));

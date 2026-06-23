@@ -1,0 +1,21 @@
+---
+source: crates/vespertide-exporter/src/tests/mod.rs
+expression: rendered
+---
+export const articleUser = pgTable("article_user", {
+  articleId: uuid("article_id").notNull().references(() => article.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  authorOrder: integer("author_order").notNull().default(1),
+  role: varchar("role", { length: 20 }).notNull().default("contributor"),
+  isLead: boolean("is_lead").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.articleId, t.userId] }),
+  idxArticleId: index().on(t.articleId),
+  idxUserId: index().on(t.userId),
+}));
+
+export const articleUserRelations = relations(articleUser, ({ one, many }) => ({
+  article: one(article, { fields: [articleUser.articleId], references: [article.id] }),
+  user: one(user, { fields: [articleUser.userId], references: [user.id] }),
+}));

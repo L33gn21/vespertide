@@ -18,6 +18,7 @@ fn render_schema(orm: Orm, schema: &[TableDef]) -> Result<String, String> {
         Orm::SqlModel => crate::sqlmodel::render_entities(schema),
         Orm::Jpa => crate::jpa::render_entities(schema).map(|entities| entities.join("\n")),
         Orm::Prisma => crate::prisma::export(schema),
+        Orm::Drizzle => crate::drizzle::export(schema),
     }
 }
 
@@ -31,6 +32,7 @@ macro_rules! orm_cases {
         #[case::sqlmodel(Orm::SqlModel)]
         #[case::jpa(Orm::Jpa)]
         #[case::prisma(Orm::Prisma)]
+        #[case::drizzle(Orm::Drizzle)]
         fn $test_name(#[case] orm: Orm) {
             let table = $fixture();
             let rendered = render_entity(orm, &table).unwrap();
@@ -48,6 +50,7 @@ macro_rules! orm_cases {
         #[case::sqlmodel(Orm::SqlModel)]
         #[case::jpa(Orm::Jpa)]
         #[case::prisma(Orm::Prisma)]
+        #[case::drizzle(Orm::Drizzle)]
         fn $test_name(#[case] orm: Orm) {
             let schema: Vec<TableDef> = $fixture();
             let rendered = render_schema(orm, &schema).unwrap();
@@ -303,6 +306,7 @@ fn to_pascal_case_for(orm: Orm, s: &str) -> String {
         Orm::SqlModel => crate::sqlmodel::to_pascal_case_for_tests(s),
         Orm::Jpa => crate::jpa::to_pascal_case_for_tests(s),
         Orm::Prisma => crate::prisma::to_pascal_case_for_tests(s),
+        Orm::Drizzle => crate::drizzle::to_pascal_case_for_tests(s),
     }
 }
 
@@ -323,6 +327,7 @@ fn to_pascal_case_for(orm: Orm, s: &str) -> String {
 #[case::sqlmodel(Orm::SqlModel)]
 #[case::jpa(Orm::Jpa)]
 #[case::prisma(Orm::Prisma)]
+#[case::drizzle(Orm::Drizzle)]
 fn to_pascal_case_shared_semantics(
     #[values(
         ("", ""),
@@ -350,6 +355,7 @@ fn to_pascal_case_shared_semantics(
 #[case::sqlmodel(Orm::SqlModel)]
 #[case::jpa(Orm::Jpa)]
 #[case::prisma(Orm::Prisma)]
+#[case::drizzle(Orm::Drizzle)]
 fn render_entity_with_schema_snapshots(
     #[values(
         "many_to_many_article",

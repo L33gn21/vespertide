@@ -123,6 +123,36 @@ impl PrismaConfig {
     }
 }
 
+/// Drizzle-specific export configuration.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
+#[serde(rename_all = "camelCase")]
+#[non_exhaustive]
+pub struct DrizzleConfig {
+    /// Database provider. Drizzle output currently targets `drizzle-orm/pg-core`
+    /// (PostgreSQL); this field is reserved for future multi-dialect support.
+    #[serde(default = "default_drizzle_provider")]
+    pub provider: String,
+}
+
+fn default_drizzle_provider() -> String {
+    "postgresql".to_string()
+}
+
+impl Default for DrizzleConfig {
+    fn default() -> Self {
+        Self {
+            provider: default_drizzle_provider(),
+        }
+    }
+}
+
+impl DrizzleConfig {
+    pub fn provider(&self) -> &str {
+        &self.provider
+    }
+}
+
 /// Top-level vespertide configuration.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "schema", derive(schemars::JsonSchema))]
@@ -148,6 +178,9 @@ pub struct VespertideConfig {
     /// Prisma-specific export configuration.
     #[serde(default)]
     pub prisma: PrismaConfig,
+    /// Drizzle-specific export configuration.
+    #[serde(default)]
+    pub drizzle: DrizzleConfig,
     /// Prefix to add to all table names (including migration version table).
     /// Default: "" (no prefix)
     #[serde(default)]
@@ -187,6 +220,7 @@ impl Default for VespertideConfig {
             model_export_dir: default_model_export_dir(),
             seaorm: SeaOrmConfig::default(),
             prisma: PrismaConfig::default(),
+            drizzle: DrizzleConfig::default(),
             prefix: String::new(),
             lock_timeout_ms: None,
             statement_timeout_ms: None,
@@ -243,6 +277,11 @@ impl VespertideConfig {
     /// Prisma-specific export configuration.
     pub fn prisma(&self) -> &PrismaConfig {
         &self.prisma
+    }
+
+    /// Drizzle-specific export configuration.
+    pub fn drizzle(&self) -> &DrizzleConfig {
+        &self.drizzle
     }
 
     /// Prefix to add to all table names.

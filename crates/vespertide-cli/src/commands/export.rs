@@ -9,8 +9,8 @@ use tokio::fs;
 use vespertide_config::VespertideConfig;
 use vespertide_core::TableDef;
 use vespertide_exporter::{
-    Orm, render_entity_with_schema, prisma::PrismaExporterWithConfig,
-    seaorm::SeaOrmExporterWithConfig,
+    Orm, drizzle::DrizzleExporterWithConfig, prisma::PrismaExporterWithConfig,
+    render_entity_with_schema, seaorm::SeaOrmExporterWithConfig,
 };
 
 use crate::parallel_config::{EXPORT_RENDER_PAR_MIN_LEN, EXPORT_RENDER_PAR_THRESHOLD};
@@ -23,6 +23,7 @@ pub enum OrmArg {
     Sqlmodel,
     Jpa,
     Prisma,
+    Drizzle,
 }
 
 impl From<OrmArg> for Orm {
@@ -33,6 +34,7 @@ impl From<OrmArg> for Orm {
             OrmArg::Sqlmodel => Orm::SqlModel,
             OrmArg::Jpa => Orm::Jpa,
             OrmArg::Prisma => Orm::Prisma,
+            OrmArg::Drizzle => Orm::Drizzle,
         }
     }
 }
@@ -56,9 +58,12 @@ pub async fn cmd_export(orm: OrmArg, export_dir: Option<PathBuf>) -> Result<()> 
 
     let target_root = resolve_export_dir(export_dir, &config);
 
-    // Prisma uses a single-file output strategy
+    // Prisma and Drizzle use a single-file output strategy
     if matches!(orm, OrmArg::Prisma) {
         return cmd_export_prisma(config, normalized_models, target_root).await;
+    }
+    if matches!(orm, OrmArg::Drizzle) {
+        return cmd_export_drizzle(config, normalized_models, target_root).await;
     }
 
     // Clean the export directory before regenerating
@@ -249,6 +254,7 @@ async fn clean_export_dir(root: &Path, orm: Orm) -> Result<()> {
         Orm::SqlAlchemy | Orm::SqlModel => "py",
         Orm::Jpa => "java",
         Orm::Prisma => "prisma",
+        Orm::Drizzle => "ts",
     };
 
     clean_dir_recursive(root, ext).await?;
@@ -342,6 +348,7 @@ fn build_output_path(root: &Path, rel_path: &Path, orm: Orm) -> PathBuf {
             Orm::SqlAlchemy | Orm::SqlModel => "py",
             Orm::Jpa => "java",
             Orm::Prisma => "prisma",
+            Orm::Drizzle => "ts",
         };
         // Java requires filename to match PascalCase class name
         let file_stem = if matches!(orm, Orm::Jpa) {
@@ -455,6 +462,36 @@ async fn cmd_export_prisma(
     }
 
     let out_path = target_root.join("schema.prisma");
+    fs::write(&out_path, &content)
+        .await
+        .with_context(|| format!("write {}", out_path.display()))?;
+
+    println!(
+        "Exported {} model(s) -> {}",
+        normalized_models.len(),
+        out_path.display()
+    );
+
+    Ok(())
+}
+
+async fn cmd_export_drizzle(
+    config: VespertideConfig,
+    normalized_models: Vec<(TableDef, PathBuf)>,
+    target_root: PathBuf,
+) -> Result<()> {
+    let all_tables: Vec<TableDef> = normalized_models.iter().map(|(t, _)| t.clone()).collect();
+    let content = DrizzleExporterWithConfig::new(config.drizzle()).render_schema(&all_tables);
+
+    clean_export_dir(&target_root, Orm::Drizzle).await?;
+
+    if !target_root.exists() {
+        fs::create_dir_all(&target_root)
+            .await
+            .with_context(|| format!("create export dir {}", target_root.display()))?;
+    }
+
+    let out_path = target_root.join("schema.ts");
     fs::write(&out_path, &content)
         .await
         .with_context(|| format!("write {}", out_path.display()))?;

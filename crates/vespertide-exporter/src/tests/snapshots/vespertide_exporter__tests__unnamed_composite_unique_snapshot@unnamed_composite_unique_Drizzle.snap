@@ -1,0 +1,11 @@
+---
+source: crates/vespertide-exporter/src/tests/mod.rs
+expression: rendered
+---
+export const unnamedUnique = pgTable("unnamed_unique", {
+  id: integer("id").primaryKey(),
+  colA: integer("col_a").notNull(),
+  colB: integer("col_b").notNull(),
+}, (t) => ({
+  uqColAColB: unique().on(t.colA, t.colB),
+}));

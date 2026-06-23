@@ -1,0 +1,10 @@
+---
+source: crates/vespertide-exporter/src/tests/mod.rs
+expression: rendered
+---
+export const parent = pgTable("parent", {
+  id1: integer("id1").notNull(),
+  id2: integer("id2").notNull(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.id1, t.id2] }),
+}));

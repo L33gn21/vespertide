@@ -1,0 +1,10 @@
+---
+source: crates/vespertide-exporter/src/tests/mod.rs
+expression: rendered
+---
+export const lineItems = pgTable("line_items", {
+  id: integer("id").primaryKey(),
+  orderId: integer("order_id").notNull(),
+  orderVersion: integer("order_version").notNull(),
+  sku: text("sku").notNull(),
+});
